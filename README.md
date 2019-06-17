@@ -8,7 +8,7 @@ For informal tutoring purposes.
 
 Python 3 (Anaconda)
 
-### generic guidelines.
+### generic GA guideline.
 
 1. Initialisation.
     Generate population of N items, each with randomly-generated chromosomes.
@@ -26,7 +26,6 @@ Python 3 (Anaconda)
 
 4. Replacement of the old population with new population and return to Step 2.
 
--
 
 #### GA Word search example.
 
@@ -35,3 +34,5 @@ Python 3 (Anaconda)
 tests:
 
 ```python tests_word_search_ga.py```
+
+![screenShot](https://{https://raw.githubusercontent.com/iras/GA_examples/master/images/GA_word_search_screenshot.png})
