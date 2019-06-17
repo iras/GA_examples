@@ -35,4 +35,4 @@ tests:
 
 ```python tests_word_search_ga.py```
 
-![screenShot](https://{https://raw.githubusercontent.com/iras/GA_examples/master/images/GA_word_search_screenshot.png})
+![word_search_ga screenshot](https://github.com/iras/GA_examples/blob/master/images/GA_word_search_screenshot.png)
