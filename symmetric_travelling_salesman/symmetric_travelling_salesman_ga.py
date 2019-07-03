@@ -6,112 +6,119 @@ from datetime import datetime
 import numpy as np
 import random
 import time
+from pprint import pprint as pp
 
 
 random.seed( time.time() )
 
 
-def get_initial_population( population_size, word_length ):
-
+def get_initial_population( population_size, city_ids ):
+    # get population of possible routes.
+    # A route is defined as a list of cities explored in increasing order.
+    # NB: City(0) to city(1) to city(2) to... city(n) to city(0).
     population = []
     for n in range( population_size ):
-        population.append(
-            ''.join(
-                [ chr( random.randint( 97, 122 ) ) for m in range(word_length) ]
-            )
-        )
+        route = list( city_ids )  # copy list. The copy will be shuffled below.
+        np.random.shuffle( route )
+        population.append( route )
     return population
 
 
-def get_fitness_score( word, ref ):
+def get_fitness_score( route, dist_memo, city_dict ):
 
-    assert( len( word ) == len( ref ) )
+    # NB: the fitness score here is the length of the path through all cities
+    #     including the last city and the first city to complete the round trip.
 
-    charwise_comparisons = [ float(word[n]==ref[n]) for n in range(len(word)) ]
-    return sum( charwise_comparisons ) / float( len( ref ) )
+    # append the first city to complete the route's round trip.
+    route_copy = list( route )  # copy list since it'll be changed.
+    route_copy.append( route_copy[0] )
+
+    length = 0
+    prev_city_id = route_copy[0]
+    for city_id in route_copy[1:]:
+        index = ( min(prev_city_id, city_id), max(prev_city_id, city_id), )
+        # add distance between those two cities if not already memoised.
+        if index not in dist_memo:
+            dist_memo[ index ] = np.linalg.norm(
+                city_dict[ city_id ] - city_dict[ prev_city_id ]
+            )
+        length += dist_memo[ index ]
+        prev_city_id = city_id
+
+    return round(length, 6), dist_memo
 
 
 def crossover( two_fittest_individuals ):
 
-    word_1, word_2 = two_fittest_individuals
-    assert( len( word_1 ) == len( word_2 ) )
+    route_1, route_2 = two_fittest_individuals
+    route_1 = list( route_1 )  # copy it since the copy might be altered below.
 
-    # random-points crossover. This seems to be comparatively the fastest.
-    # choose half random cells from word_1 and replace them with word_2's cells.
-    number_letter_substitutions = int( len(word_1) / 2.0 )
-    random_positions = random.sample(  # e.g.: [ 1, 4, 6, 7 ]
-        range( len( word_1 ) ),        # e.g.: [ 0, 1, 2, 3, 4, 5, 6, 7 ]
-        number_letter_substitutions    # e.g.: 4
-    )
-    tuples = zip( word_1, word_2 )
+    # This TSP breeding step uses the "ordered crossover" method explained by
+    # Lee Jacobson (2012) in: www.theprojectspot.com/tutorial-post/applying-a
+    #                 -genetic-algorithm-to-the-travelling-salesman-problem/5
 
-    return ''.join(
-        [ t[0] if i in random_positions else t[1] for i, t in enumerate(tuples) ]
-    )
+    len_route_1 = len( route_1 )
 
-    """
-    # mixed crossover.
-    crossing_mode = random.random()
-    if crossing_mode > 0.666:
+    ### route_1's gene is a contiguous sublist of route_1.
+    route_1_gene_length = int( len_route_1 / 2 )
+    route_1_gene_start  = np.random.randint( len_route_1 )
+    route_1_gene_end    = route_1_gene_start + route_1_gene_length
+    # double up route_1 to avoid the gene being at the two extremes of the list.
+    if route_1_gene_end > len_route_1:
+        route_1.extend( route_1 )
+    # extract route_1's gene.
+    route_1_gene = route_1[ route_1_gene_start : route_1_gene_end ]
 
-        # single-point crossover.
-        half = int( len( word_1 ) / 2.0 )
-        return word_1[:half] + word_2[half:]
+    ### route_2's gene is a contiguous sublist of route_2.
+    route_2_gene = list( route_2 )  # initially set it as a copy of route_2 and
+    # then remove cities in route_2_gene that are already in route_1_gene.
+    # The deletion of specific ids will preserve the route_2's items order.
+    for city_id in route_1_gene:
+        del route_2_gene[ route_2_gene.index( city_id ) ]
 
-    elif crossing_mode > 0.5:
-        # uniform crossover (even numbers).
-        return ''.join(
-            [ t[0] if i%2 else t[1] for i, t in enumerate(zip(word_1, word_2)) ]
-        )
+    ### child_route.
+    child_route = route_1_gene + route_2_gene
+    assert( len( child_route ) == len( route_2 ) )
 
-    else:
-        # uniform crossover (odd numbers).
-        return ''.join(
-            [ t[1] if i%2 else t[0] for i, t in enumerate(zip(word_1, word_2)) ]
-        )
-    """
+    return np.array( child_route )
 
 
-def get_mutated_word( word, number_of_mutations ):
+def get_mutated_route( route, number_of_mutations ):
 
-    non_overlapping_random_places_in_the_word = \
-        random.sample( range(0, len(word)), number_of_mutations )
+    for _ in range( number_of_mutations ):
+        # swap two random cities in the given route.
+        list_id_0, list_id_1 = np.random.choice( range( len(route) ), 2 )
+        city_0 = route[ list_id_0 ]
+        city_1 = route[ list_id_1 ]
+        route[ list_id_0 ] = city_1
+        route[ list_id_1 ] = city_0
+    return route
 
-    # inject mutations in those places.
-    word_as_list = list( word )
-    for n in non_overlapping_random_places_in_the_word:
-        word_as_list[n] = chr( random.randint(97, 122) )
 
-    return ''.join( word_as_list )
-
-
-def selection( population, ref ):
+def selection( population, dist_memo, city_dict ):
 
     # build mating pool with fitness scores as keys.
     mating_pool = {}
-    for word in population:
-        score = get_fitness_score( word, ref )
-        if score not in mating_pool.keys():
-            mating_pool[ score ] = []
-        mating_pool[ score ].append( word )
+    for route in population:
+        length, dist_memo = get_fitness_score( route, dist_memo, city_dict )
+        if length not in mating_pool.keys():
+            mating_pool[ length ] = []
+        mating_pool[ length ].append( route )
 
-    return mating_pool
+    return length, dist_memo, mating_pool
 
 
 def get_normalised_fitness_score_mating_pool( mating_pool ):
     # normalise mating_pool's fitness score values.
     # i.e.  from:  fitness-score key. e.g.: [ 0.428571, 0.142857, 1e-05 ]
-    #        to:   normalised fs key. e.g.: [0.749986, 0.249995, 1.75e-05]
+    #        to:   normalised fs key. e.g.: [ 0.749986, 0.249995, 1.75e-05 ]
     #
     mating_pool_copy = dict( mating_pool )  # copy dict.
     # replace fitness score 0.0 with a very low non-zero value.
     if 0.0 in mating_pool_copy.keys():
         mating_pool_copy[ 0.00001 ] = mating_pool_copy.pop( 0.0 )
     # calculate scaling_factor.
-    denominator_of_scaling_factor = 0
-    for k in mating_pool_copy.keys():
-        denominator_of_scaling_factor += k
-    scaling_factor = 1.0 / denominator_of_scaling_factor
+    scaling_factor = 1.0 / sum( mating_pool_copy.keys() )
     # generate pool with normalised fitness score values.
     nfs_mating_pool = {}
     for k in mating_pool_copy.keys():
@@ -136,36 +143,31 @@ def get_two_fittest_individuals( nfs_mating_pool ):
         )
     else:
         # keep the single fittest individual.
-        two_fittest_individuals.append(
-            ''.join( list_associated_to_the_max_key[ 0 ] )
-        )
+        two_fittest_individuals.append( list_associated_to_the_max_key[ 0 ] )
         # get the second fittest individual.
-        list_associated_to_the_new_max_key = \
+        list_associated_to_the_second_max_key = \
             nfs_mating_pool.pop( max( nfs_mating_pool.keys() ) )
         two_fittest_individuals.append(
-            ''.join( random.sample( list_associated_to_the_new_max_key, 1 ) )
+            random.sample( list_associated_to_the_second_max_key, 1 )[0]
         )
-
     return two_fittest_individuals
 
 
 def reproduction( mating_pool, length_new_population ):
 
-    two_fittest_individuals = get_two_fittest_individuals(
+    normalised_fitness_score_mating_pool = \
         get_normalised_fitness_score_mating_pool( mating_pool )
+    two_fittest_individuals = get_two_fittest_individuals(
+        normalised_fitness_score_mating_pool
     )
-
-    print( two_fittest_individuals )
 
     # mating.
     #
     new_population = []
     for i in range( length_new_population ):
 
-        child_word = crossover( two_fittest_individuals )
-        child_word = get_mutated_word( child_word, 1 )
-        new_population.append( child_word )
-
-    print( new_population )
+        child_route = crossover( two_fittest_individuals )
+        child_route = get_mutated_route( child_route, 1 )
+        new_population.append( child_route )
 
     return new_population

@@ -5,14 +5,16 @@
 import unittest
 import os, sys
 from io import StringIO
-from word_search_ga import get_fitness_score, crossover, get_mutated_word, \
+import numpy as np
+from symmetric_travelling_salesman_ga import get_fitness_score, crossover,\
+    get_mutated_route, \
     get_normalised_fitness_score_mating_pool, get_two_fittest_individuals
 
 
 
-class TestWordSearchGA( unittest.TestCase ):
+class TestSymmetricTSPGA( unittest.TestCase ):
 
-
+    """
     def test_get_fitness_score_1( self ):
         self.assertEqual( get_fitness_score( 'qwerty', 'queens'), 1/3.0 )
 
@@ -79,42 +81,60 @@ class TestWordSearchGA( unittest.TestCase ):
             )
 
         self.assertTrue( all( battery_test_list ) )
-
+    """
 
     def test_get_normalised_fitness_score_mating_pool( self ):
         mating_pool = {
-            0.0: [
-                'vfwpcyze',
-                'cqehqacd',
-                'ikgqnnlz',
-                'cpfplhcj',
-                'qwzjpbtk',
-                'ivluyiew',
-                'gsnbcici',
-                'mqdkpvgn',
+            61.553670743505066: [
+                np.array([0, 4, 1, 3, 2]),
+                np.array([3, 0, 4, 1, 2]),
+                np.array([3, 4, 0, 1, 2]),
+                np.array([0, 1, 3, 4, 2]),
+                np.array([0, 1, 4, 2, 3]),
+                np.array([3, 0, 4, 1, 2]),
+                np.array([3, 4, 0, 1, 2]),
+                np.array([1, 0, 3, 4, 2]),
+                np.array([2, 1, 4, 0, 3])
             ],
-            0.125: ['svvdlsof', 'ebjvywaz']
+            61.55367074350506: [
+                np.array([3, 2, 0, 1, 4])
+            ]
         }
         nfs_mating_pool = {
-            7.999360051195904e-05: [
-                'vfwpcyze',
-                'cqehqacd',
-                'ikgqnnlz',
-                'cpfplhcj',
-                'qwzjpbtk',
-                'ivluyiew',
-                'gsnbcici',
-                'mqdkpvgn',
-            ],
-            0.999920006399488: ['svvdlsof', 'ebjvywaz']
+            0.5: [
+                np.array([3, 2, 0, 1, 4])
+            ]
         }
 
-        self.assertEqual(
-            get_normalised_fitness_score_mating_pool( mating_pool ),
-            nfs_mating_pool
+        normalised_fitness_score_mating_pool = \
+            get_normalised_fitness_score_mating_pool( mating_pool )
+
+        # the dictionaries need to be recast so that np.arrays are replaced by
+        # lists in order to be able to apply self.assertDictEqual.
+        recast_normalised_fitness_score_mating_pool = {}
+        for k, list_ in normalised_fitness_score_mating_pool.items():
+            new_list = []
+            for item in list_:
+                new_list.append( list(item) )
+            recast_normalised_fitness_score_mating_pool[ k ] = new_list
+
+        recast_nfs_mating_pool = {}
+        for k, list_ in nfs_mating_pool.items():
+            new_list = []
+            for item in list_:
+                new_list.append( list(item) )
+            recast_nfs_mating_pool[ k ] = new_list
+
+        self.assertDictEqual(
+            recast_normalised_fitness_score_mating_pool,
+            recast_nfs_mating_pool
         )
 
 
+
+
+
+    """
     def test_get_two_fittest_individuals( self ):
         nfs_mating_pool = {
             7.999360051195904e-05: [
@@ -134,7 +154,7 @@ class TestWordSearchGA( unittest.TestCase ):
             sorted( get_two_fittest_individuals( nfs_mating_pool ) ),
             sorted( ['svvdlsof', 'ebjvywaz'] )
         )
-
+    """
 
 
 if __name__ == '__main__':
