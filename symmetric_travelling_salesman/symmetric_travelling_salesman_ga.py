@@ -108,58 +108,36 @@ def selection( population, dist_memo, city_dict ):
     return length, dist_memo, mating_pool
 
 
-def get_normalised_fitness_score_mating_pool( mating_pool ):
-    # normalise mating_pool's fitness score values.
-    # i.e.  from:  fitness-score key. e.g.: [ 0.428571, 0.142857, 1e-05 ]
-    #        to:   normalised fs key. e.g.: [ 0.749986, 0.249995, 1.75e-05 ]
-    #
-    mating_pool_copy = dict( mating_pool )  # copy dict.
-    # replace fitness score 0.0 with a very low non-zero value.
-    if 0.0 in mating_pool_copy.keys():
-        mating_pool_copy[ 0.00001 ] = mating_pool_copy.pop( 0.0 )
-    # calculate scaling_factor.
-    scaling_factor = 1.0 / sum( mating_pool_copy.keys() )
-    # generate pool with normalised fitness score values.
-    nfs_mating_pool = {}
-    for k in mating_pool_copy.keys():
-        nfs_mating_pool[ scaling_factor * k ] = mating_pool_copy[ k ]
+def get_two_fittest_individuals( mating_pool ):
 
-    return nfs_mating_pool
-
-
-def get_two_fittest_individuals( nfs_mating_pool ):
     # get the two fittest individuals.
     # Two individuals were chosen here to maximise genetic diversity although
     # more than 2 individuals could be used.
     #
     two_fittest_individuals = []
-    list_associated_to_the_max_key = \
-        nfs_mating_pool.pop( min( nfs_mating_pool.keys() ) )
-    if len( list_associated_to_the_max_key ) > 1:
-        # get two fittest individuals.
+    list_associated_to_the_min_key = \
+        mating_pool.pop( min( mating_pool.keys() ) )
+    if len( list_associated_to_the_min_key ) > 1:
+        # get the two fittest individuals.
         two_fittest_individuals = random.sample(
-            list_associated_to_the_max_key,
+            list_associated_to_the_min_key,
             2
         )
     else:
         # keep the single fittest individual.
-        two_fittest_individuals.append( list_associated_to_the_max_key[ 0 ] )
-        # get the second fittest individual.
-        list_associated_to_the_second_max_key = \
-            nfs_mating_pool.pop( min( nfs_mating_pool.keys() ) )
+        two_fittest_individuals.append( list_associated_to_the_min_key[ 0 ] )
+        # and get the second fittest individual.
+        list_associated_to_the_second_min_key = \
+            mating_pool.pop( min( mating_pool.keys() ) )
         two_fittest_individuals.append(
-            random.sample( list_associated_to_the_second_max_key, 1 )[0]
+            random.sample( list_associated_to_the_second_min_key, 1 )[0]
         )
     return two_fittest_individuals
 
 
 def reproduction( mating_pool, length_new_population ):
 
-    normalised_fitness_score_mating_pool = \
-        get_normalised_fitness_score_mating_pool( mating_pool )
-    two_fittest_individuals = get_two_fittest_individuals(
-        normalised_fitness_score_mating_pool
-    )
+    two_fittest_individuals = get_two_fittest_individuals( mating_pool )
 
     # mating.
     #

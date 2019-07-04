@@ -17,28 +17,30 @@ import symmetric_travelling_salesman_ga as ga
 
 ################################################################################
 
-
 NUMBER_OF_CITIES = 30
-twopi = 2 * np.pi
+TWOPI = 2 * np.pi
+
+test_cities_x_pos = \
+    [10+10*np.cos(i/NUMBER_OF_CITIES*TWOPI) for i in range( NUMBER_OF_CITIES )]
+test_cities_y_pos = \
+    [10+10*np.sin(i/NUMBER_OF_CITIES*TWOPI) for i in range( NUMBER_OF_CITIES )]
+cities_x_pos = list( 20 * np.random.random(  NUMBER_OF_CITIES) )
+cities_y_pos = list( 20 * np.random.random(  NUMBER_OF_CITIES) )
+
+
+# init CITY_DICT.
+# e.g.:   CITY_DICT = {
+#             0: array([17.22729579,  7.81743567]),
+#             1: array([ 2.18160281, 14.34073598]),
+#             2: array([19.18576723,  3.90946777]),
+#             ...
+#         }
 CITY_DICT = dict(
     zip(
-        list( np.arange( NUMBER_OF_CITIES ) ),  # city ids.
-        np.array( list(                         # list of tuples (2D positions).
-            zip(
-                #[10+10*np.cos(i / NUMBER_OF_CITIES*twopi) for i in range( NUMBER_OF_CITIES )],
-                #[10+10*np.sin(i / NUMBER_OF_CITIES*twopi) for i in range( NUMBER_OF_CITIES )]
-                list( 20 * np.random.random(  NUMBER_OF_CITIES) ),
-                list( 20 * np.random.random(  NUMBER_OF_CITIES) )
-            )
-        ) )
+        list( np.arange( NUMBER_OF_CITIES ) ),                 # city ids.
+        np.array( list( zip( cities_x_pos, cities_y_pos ) ) )  # city positions.
     )
 )
-# e.g.: CITY_DICT = {
-#          0: array([17.22729579,  7.81743567]),
-#          1: array([ 2.18160281, 14.34073598]),
-#          2: array([19.18576723,  3.90946777]),
-#          ...
-#       )
 
 dist_memo = {}  # use memoization to avoid square roots' repeats.
 
@@ -103,14 +105,13 @@ def data_gen( t = 0 ):
     global curr_shortest_distance
     global dist_memo
 
+    while True:
 
-    while max( mating_pool.keys() ) < 10000.0:
-
-        # fittest items. 
+        # save fittest items. 
         fittest_items_key = min( mating_pool.keys() )
         fittest_items_copy = list( mating_pool[ fittest_items_key ] )
 
-
+        ### GAs step.
         population = ga.reproduction( mating_pool, 10 );
         length, dist_memo, mating_pool = ga.selection(
             population,
@@ -118,21 +119,18 @@ def data_gen( t = 0 ):
             CITY_DICT
         )
 
-
-        # elitarism step.
+        ###  GA Elitarism step.
         if fittest_items_key not in mating_pool:
             mating_pool[ fittest_items_key ] = []
         mating_pool[ fittest_items_key ].extend( fittest_items_copy )
 
-
-
-
-
+        # update curr_shortest_distance.
         if length < curr_shortest_distance:
             print( '•••  %s' % length )
             curr_shortest_distance = length
         t += 1
 
+        # generate data for the bottom graph.
         min_dist_path_id = min( mating_pool.keys() )
         min_dist_path = list( mating_pool[ min_dist_path_id ][0] )
         min_dist_path.append( min_dist_path[0] )  # close the path.
