@@ -134,7 +134,7 @@ def get_two_fittest_individuals( nfs_mating_pool ):
     #
     two_fittest_individuals = []
     list_associated_to_the_max_key = \
-        nfs_mating_pool.pop( max( nfs_mating_pool.keys() ) )
+        nfs_mating_pool.pop( min( nfs_mating_pool.keys() ) )
     if len( list_associated_to_the_max_key ) > 1:
         # get two fittest individuals.
         two_fittest_individuals = random.sample(
@@ -146,7 +146,7 @@ def get_two_fittest_individuals( nfs_mating_pool ):
         two_fittest_individuals.append( list_associated_to_the_max_key[ 0 ] )
         # get the second fittest individual.
         list_associated_to_the_second_max_key = \
-            nfs_mating_pool.pop( max( nfs_mating_pool.keys() ) )
+            nfs_mating_pool.pop( min( nfs_mating_pool.keys() ) )
         two_fittest_individuals.append(
             random.sample( list_associated_to_the_second_max_key, 1 )[0]
         )

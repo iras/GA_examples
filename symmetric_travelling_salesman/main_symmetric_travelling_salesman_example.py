@@ -18,7 +18,7 @@ import symmetric_travelling_salesman_ga as ga
 ################################################################################
 
 
-NUMBER_OF_CITIES = 28
+NUMBER_OF_CITIES = 30
 twopi = 2 * np.pi
 CITY_DICT = dict(
     zip(
@@ -103,13 +103,31 @@ def data_gen( t = 0 ):
     global curr_shortest_distance
     global dist_memo
 
-    while max( mating_pool.keys() ) < 1000.0:
-        population  = ga.reproduction( mating_pool, 10 );
+
+    while max( mating_pool.keys() ) < 10000.0:
+
+        # fittest items. 
+        fittest_items_key = min( mating_pool.keys() )
+        fittest_items_copy = list( mating_pool[ fittest_items_key ] )
+
+
+        population = ga.reproduction( mating_pool, 10 );
         length, dist_memo, mating_pool = ga.selection(
             population,
             dist_memo,
             CITY_DICT
         )
+
+
+        # elitarism step.
+        if fittest_items_key not in mating_pool:
+            mating_pool[ fittest_items_key ] = []
+        mating_pool[ fittest_items_key ].extend( fittest_items_copy )
+
+
+
+
+
         if length < curr_shortest_distance:
             print( '•••  %s' % length )
             curr_shortest_distance = length
@@ -189,7 +207,7 @@ def run( data ):
 
     if y == curr_shortest_distance:
         fig.savefig(
-            os.path.expanduser( '~/Desktop/%s.png' % y ),
+            os.path.expanduser( '~/Desktop/screenshots/%s.png' % y ),
             dpi=150
         )
 
