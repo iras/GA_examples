@@ -25,10 +25,10 @@ CITY_DICT = dict(
         list( np.arange( NUMBER_OF_CITIES ) ),  # city ids.
         np.array( list(                         # list of tuples (2D positions).
             zip(
-                [10+10*np.cos(i / NUMBER_OF_CITIES*twopi) for i in range( NUMBER_OF_CITIES )],
-                [10+10*np.sin(i / NUMBER_OF_CITIES*twopi) for i in range( NUMBER_OF_CITIES )]
-                #list( 20 * np.random.random(  NUMBER_OF_CITIES) ),
-                #list( 20 * np.random.random(  NUMBER_OF_CITIES) )
+                #[10+10*np.cos(i / NUMBER_OF_CITIES*twopi) for i in range( NUMBER_OF_CITIES )],
+                #[10+10*np.sin(i / NUMBER_OF_CITIES*twopi) for i in range( NUMBER_OF_CITIES )]
+                list( 20 * np.random.random(  NUMBER_OF_CITIES) ),
+                list( 20 * np.random.random(  NUMBER_OF_CITIES) )
             )
         ) )
     )
