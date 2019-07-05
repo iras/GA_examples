@@ -1,7 +1,7 @@
 # Genetic algorithms examples - main.
 # MIT License.
 
-import os
+import os, shutil
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
@@ -13,6 +13,8 @@ import symmetric_travelling_salesman_ga as ga
 #   "Given a list of cities and the distances between each pair of cities, what
 #    is the shortest possible route that visits each city and returns to the
 #    origin city?".
+
+# NB: This example does not have an exit condition.
 
 
 ################################################################################
@@ -39,6 +41,7 @@ CITY_DICT = dict(
     zip(
         list( np.arange( NUMBER_OF_CITIES ) ),                 # city ids.
         np.array( list( zip( cities_x_pos, cities_y_pos ) ) )  # city positions.
+        #np.array( list( zip( test_cities_x_pos, test_cities_y_pos ) ) )  # test
     )
 )
 
@@ -61,20 +64,28 @@ def get_annotation():
     return plt.annotate( '', xy = ( 5, -5 ), color='green' )
 
 xdata, ydata = [], []
-fig, (ax0, ax1) = plt.subplots( 2, figsize=(4,15) )
+fig, (ax0, ax1) = plt.subplots( 2, figsize=( 6, 15 ) )
 line_0, = ax0.plot( [], [], lw=.5 )
 line_1, = ax1.plot( [], [], lw=.5, color='r')
 line = [ line_0, line_1 ]
+
 # top plot.
-ax0.grid()
 ax0.set_ylabel( 'fitness score' )
 ax0.set_xlabel( 'time (steps)' )
+#ax0.grid()
+
 # bottom plot.
 ax1.set_yticklabels( [] )
 ax1.set_xticklabels( [] )
 ax1.xaxis.set_ticks_position( 'none' )
 ax1.yaxis.set_ticks_position( 'none' )
 annotation = get_annotation()
+
+# add images folder.
+PATH = os.path.expanduser( '~/Desktop/TSP_screenshots' )
+if os.path.exists( PATH ):
+    shutil.rmtree( PATH )
+os.makedirs( PATH )
 
 
 ################################################################################
@@ -84,7 +95,7 @@ def init():
     global annotation
     global background
     # init top plot.
-    ax0.set_ylim( 0, 1000 )
+    ax0.set_ylim( 0, 500 )
     ax0.set_xlim( 0, 100 )
     del xdata[:]
     del ydata[:]
@@ -172,12 +183,6 @@ def run( data ):
     # extend horizontal axis.
     if t >= xmax:
         ax0.set_xlim( xmin, 2 * xmax )
-        ax0.figure.canvas.draw()
-        ax1.clear()
-        ax1.set_ylim( -10, 30 )
-        ax1.set_xlim( -10, 30 )
-        annotation = get_annotation()
-        ax1.figure.canvas.draw()
 
     # remove old ax1's lines and add new lines.
     try:
@@ -194,18 +199,20 @@ def run( data ):
         list_lines[0],
         list_lines[1],
         'b-',
-        linewidth=.5,
-        color='blue',
-        marker='o',
-        markersize=3
+        linewidth = .5,
+        color = 'olive',
+        marker = 'o',
+        markersize = 3
     )
     ax1.draw_artist( pict )
     annotation.set_text( y )
     ax1.figure.canvas.blit( ax1.bbox )
 
+    # add red dot on the minimum length and save picture to disk.
     if y == curr_shortest_distance:
+        ax0.plot( t, y, 'ro', markersize=1 )
         fig.savefig(
-            os.path.expanduser( '~/Desktop/screenshots/%s.png' % y ),
+            os.path.expanduser( '%s/%s.png' % ( PATH, y ) ),
             dpi=150
         )
 
