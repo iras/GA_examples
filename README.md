@@ -8,7 +8,7 @@ For informal tutoring purposes.
 
 Python 3 (Anaconda)
 
-### generic GA guideline.
+### generic GAs guideline.
 
 1. Initialisation.
     Generate population of N items, each with randomly-generated chromosomes.
@@ -26,8 +26,10 @@ Python 3 (Anaconda)
 
 4. Replacement of the old population with new population and return to Step 2.
 
+5. Elitism. Keep the best solution and keep spawning from it.
 
-#### GA Word search example.
+
+#### GA Word Search example.
 
 ```python main_word_search_example```
 
@@ -36,3 +38,14 @@ tests:
 ```python tests_word_search_ga.py```
 
 ![word_search_ga screenshot](https://github.com/iras/GA_examples/blob/master/images/GA_word_search_screenshot.png)
+
+
+#### GA Symmetric Travelling Salesman Problem example.
+
+```python main_symmetric_travelling_salesman_example.py```
+
+tests:
+
+```python tests_symmetric_travelling_salesman_ga.py```
+
+![word_search_ga screenshot](https://github.com/iras/GA_examples/blob/master/images/symmetric_TSP_example.png)
